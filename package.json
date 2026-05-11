@@ -1,13 +1,19 @@
 {
   "name": "pomodoro",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Local macOS menu bar pomodoro timer",
+  "main": "src/main.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "electron ."
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "packageManager": "pnpm@10.24.0"
+  "packageManager": "pnpm@10.24.0",
+  "devDependencies": {
+    "electron": "^33.0.0"
+  },
+  "dependencies": {
+    "electron-store": "^8.2.0"
+  }
 }

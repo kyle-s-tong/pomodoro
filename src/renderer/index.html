@@ -1,0 +1,31 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Pomodoro</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="card">
+      <div class="phase" id="phase">Ready</div>
+      <div class="time" id="time">25:00</div>
+      <div class="counter" id="counter">0 sessions completed</div>
+
+      <div class="controls">
+        <button id="toggle" class="primary">Start</button>
+        <button id="reset">Reset</button>
+      </div>
+
+      <form class="settings" id="settings">
+        <label>Work (min)<input type="number" id="workMin" min="1" max="180" /></label>
+        <label>Short break (min)<input type="number" id="shortBreakMin" min="1" max="60" /></label>
+        <label>Long break (min)<input type="number" id="longBreakMin" min="1" max="120" /></label>
+        <label>Sessions before long break<input type="number" id="sessionsBeforeLongBreak" min="1" max="12" /></label>
+        <button type="submit" class="save">Save</button>
+      </form>
+
+      <button id="quit" class="quit">Quit</button>
+    </div>
+    <script src="renderer.js"></script>
+  </body>
+</html>

@@ -9,4 +9,5 @@ contextBridge.exposeInMainWorld('pomodoro', {
   quit: () => ipcRenderer.invoke('quit'),
   onState: (cb) => ipcRenderer.on('state-update', (_e, s) => cb(s)),
   onChime: (cb) => ipcRenderer.on('play-chime', () => cb()),
+  onTick: (cb) => ipcRenderer.on('play-tick', () => cb()),
 });

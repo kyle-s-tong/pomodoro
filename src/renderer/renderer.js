@@ -71,27 +71,36 @@ api.onState(render);
 api.getState().then(render);
 
 let audioCtx = null;
-api.onChime(() => {
+function getCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+
+document.addEventListener('click', () => { getCtx(); }, { once: false });
+
+function playBeep(freq, durationSec, peakGain = 0.15, startOffset = 0) {
   try {
-    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    const ctx = audioCtx;
-    const now = ctx.currentTime;
-    const tones = [880, 1320, 990];
-    tones.forEach((freq, i) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.value = freq;
-      const start = now + i * 0.22;
-      const end = start + 0.35;
-      gain.gain.setValueAtTime(0, start);
-      gain.gain.linearRampToValueAtTime(0.25, start + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.0001, end);
-      osc.connect(gain).connect(ctx.destination);
-      osc.start(start);
-      osc.stop(end + 0.02);
-    });
+    const ctx = getCtx();
+    const start = ctx.currentTime + startOffset;
+    const end = start + durationSec;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0, start);
+    gain.gain.linearRampToValueAtTime(peakGain, start + 0.015);
+    gain.gain.exponentialRampToValueAtTime(0.0001, end);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(start);
+    osc.stop(end + 0.02);
   } catch (err) {
-    console.error('chime failed', err);
+    console.error('beep failed', err);
   }
+}
+
+api.onChime(() => {
+  [880, 1320, 990].forEach((freq, i) => playBeep(freq, 0.35, 0.25, i * 0.22));
 });
+
+api.onTick(() => playBeep(880, 0.12, 0.18));

@@ -2,7 +2,7 @@ const { app, BrowserWindow, Tray, nativeImage, ipcMain, Notification, screen } =
 const path = require('node:path');
 const Store = require('electron-store');
 
-const TRAY_ICON_BASE64 = 'iVBORw0KGgoAAAANSUhEUgAAABYAAAAWCAYAAADEtGw7AAAARElEQVR4nO3MwQkAMAhDUfdf2k4gJmrAln7IJYdn9mIOfhSITIJSOItCeBVNcQncRUP8wxfDE3iYDO7gUBKUxcuNgzs78Kz7BdVxgA4AAAAASUVORK5CYII=';
+const TRAY_ICON_BASE64 = 'iVBORw0KGgoAAAANSUhEUgAAABYAAAAWCAYAAADEtGw7AAABaElEQVR4nN2T7U7CMBSGuR5FGSAM5vxEUdEYLsfL8dIEFfxCyDAo0eTQpxuzWXTUBf7YpDk7p9uzt29Pc7l/PfzrpqwEmIxLASfnUqBJuFnPPEaNLRkdqali+6okrwcledkvytOukw0MLDiuyLj5PQFTHx6WY3jfL9j/gI/HCvp2UpXJqSuTM1dHcuqso/x5ryiPOwXpbW/awYMI+q6AH62aTM/rOpJTZ33YKMtgrtoGjJdsG4XAPi88+br0dCSnzjrvDZTquR339Y10uLYBsFKHUqDS9nUkp67BsR2OPAD2FoFXoRjP8C6Lx3cK3HHXf4ezvSxdcVvLp1tBf9KnP/VxEEGTfYy/XXcBmJf5CEVs17x55ObN49B6Xqi2U02xwYSzTTzkgIARyanH0Mjbbpq35mB7eAcg/IkTP1PvR0pDaF5uKmv21xo1nDYQ1BHJqeMp20fpn6DmoD8BEVEYAi09tR2pfZoYM5js70xg7xTrAAAAAElFTkSuQmCC';
 
 const DEFAULT_SETTINGS = {
   workMin: 25,
@@ -100,16 +100,30 @@ function startTicking() {
     const now = Date.now();
     const delta = now - lastTickAt;
     lastTickAt = now;
+    const prevSeconds = Math.ceil(state.remainingMs / 1000);
     state.remainingMs -= delta;
+    const newSeconds = Math.ceil(state.remainingMs / 1000);
+    if (
+      state.remainingMs > 0 &&
+      newSeconds < prevSeconds &&
+      newSeconds >= 1 &&
+      newSeconds <= 3 &&
+      popover &&
+      !popover.isDestroyed()
+    ) {
+      popover.webContents.send('play-tick');
+    }
     if (state.remainingMs <= 0) {
       const endedPhase = state.phase;
       const { phase: next, completedWorkSessions } = nextPhaseAfter(endedPhase);
       state.completedWorkSessions = completedWorkSessions;
       state.phase = next;
       state.remainingMs = phaseDurationMs(next);
-      state.running = false;
-      stopTicking();
       notifyPhaseEnd(endedPhase, next);
+      if (endedPhase === 'longBreak') {
+        state.running = false;
+        stopTicking();
+      }
     }
     broadcastState();
   }, 250);
@@ -177,6 +191,7 @@ function createPopover() {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
+      backgroundThrottling: false,
     },
   });
   popover.loadFile(path.join(__dirname, 'renderer', 'index.html'));
@@ -211,7 +226,7 @@ function togglePopover() {
 
 function createTray() {
   const icon = nativeImage.createFromBuffer(Buffer.from(TRAY_ICON_BASE64, 'base64'));
-  icon.setTemplateImage(true);
+  icon.setTemplateImage(false);
   tray = new Tray(icon);
   tray.setToolTip('Pomodoro');
   tray.on('click', togglePopover);
